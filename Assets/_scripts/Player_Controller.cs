@@ -36,14 +36,10 @@ public class Player_Controller : MonoBehaviour
 			return;
 		}
 
+		performRotation (-movementData [0] [3], movementData [0] [1], -movementData [0] [2]);
+
 		originalPosition = bodypart_Head.transform.position;
 		originalRotation = bodypart_Head.transform.rotation;
-
-//		bodypart_Head.transform.eulerAngles = new Vector3 (bodypart_Head.transform.eulerAngles.x, 
-//		                                                 bodypart_Head.transform.eulerAngles.y + movementData [0] [2],
-//		                                                 bodypart_Head.transform.eulerAngles.z);
-
-		// need to set initial condition for pitch and roll as well
 	}
 
 	void FixedUpdate () 
@@ -55,15 +51,9 @@ public class Player_Controller : MonoBehaviour
 			float pitchMovement = 1.0f * (movementData [count] [1] - movementData [count - 1] [1]);
 			float rollMovement = -1.0f * (movementData [count] [3] - movementData [count - 1] [3]);
 
-			// offset is currently (0.0, 0.4, 0.0)
-			bodypart_Head.transform.RotateAround (originalPosition, Vector3.up, yawMovement);
-			bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.55f, 0.0f),
-                              new Vector3 (1.0f, 0.0f, 0.0f),
-                              pitchMovement * 0.6f);
-			bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.45f, 0.0f),
-                             new Vector3 (0.0f, 0.0f, 1.0f),
-                             rollMovement * 0.5f);
+			performRotation(rollMovement, pitchMovement, yawMovement);
 
+			errorDialog.text = bodypart_Head.transform.position.ToString("F");
 			count = count + 1;
 		}
 		else
@@ -90,6 +80,19 @@ public class Player_Controller : MonoBehaviour
 			if (startAnimation == true) startAnimation = false;
 			else startAnimation = true;
 		}
+	}
+
+	void performRotation(float rollMovement, float pitchMovement, float yawMovement)
+	{
+		bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.59f, 0.0f),
+		                                      Vector3.up + bodypart_Head.transform.position,
+		                                      yawMovement);
+		bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.59f, 0.0f),
+		                                      Vector3.right + bodypart_Head.transform.position,
+		                                      pitchMovement);
+		bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.59f, 0.0f),
+		                                      Vector3.forward + bodypart_Head.transform.position,
+		                                      rollMovement);
 	}
 
 }
