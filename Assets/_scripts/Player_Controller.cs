@@ -6,7 +6,6 @@ using System.Linq;
 
 public class Player_Controller : MonoBehaviour 
 {
-	public GameObject bodypart_Head;
 	public GUIText errorDialog;
 	public TextAsset textDataFile;
 
@@ -36,8 +35,8 @@ public class Player_Controller : MonoBehaviour
 			return;
 		}
 
-		originalPosition = bodypart_Head.transform.position;
-		originalRotation = bodypart_Head.transform.rotation;
+		originalPosition = transform.position;
+		originalRotation = transform.rotation;
 
 //		bodypart_Head.transform.eulerAngles = new Vector3 (bodypart_Head.transform.eulerAngles.x, 
 //		                                                 bodypart_Head.transform.eulerAngles.y + movementData [0] [2],
@@ -55,21 +54,25 @@ public class Player_Controller : MonoBehaviour
 			float pitchMovement = 1.0f * (movementData [count] [1] - movementData [count - 1] [1]);
 			float rollMovement = -1.0f * (movementData [count] [3] - movementData [count - 1] [3]);
 
-			// offset is currently (0.0, 0.4, 0.0)
-			bodypart_Head.transform.RotateAround (originalPosition, Vector3.up, yawMovement);
-			bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.55f, 0.0f),
-                              new Vector3 (1.0f, 0.0f, 0.0f),
-                              pitchMovement * 0.6f);
-			bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.45f, 0.0f),
-                             new Vector3 (0.0f, 0.0f, 1.0f),
-                             rollMovement * 0.5f);
+//			// offset is currently (0.0, 0.4, 0.0)
+//			bodypart_Head.transform.RotateAround (originalPosition, Vector3.up, yawMovement);
+//			bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.55f, 0.0f),
+//                              new Vector3 (1.0f, 0.0f, 0.0f),
+//                              pitchMovement * 0.6f);
+//			bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.45f, 0.0f),
+//                             new Vector3 (0.0f, 0.0f, 1.0f),
+//                             rollMovement * 0.5f);
+
+			transform.Rotate(10.0f, 0.0f, 0.0f, Space.Self);
+
+			errorDialog.text = transform.localPosition.ToString();
 
 			count = count + 1;
 		}
 		else
 		{
-			bodypart_Head.transform.position = originalPosition;
-			bodypart_Head.transform.rotation = originalRotation;
+			transform.position = originalPosition;
+			transform.rotation = originalRotation;
 			count = 1;
 		}
 	}
