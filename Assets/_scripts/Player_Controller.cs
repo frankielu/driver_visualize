@@ -36,7 +36,7 @@ public class Player_Controller : MonoBehaviour
 			return;
 		}
 
-		performRotation (-movementData [0] [3], movementData [0] [1], -movementData [0] [2]);
+//		performRotation (movementData[0][1], movementData[0][2], movementData[0][3]);
 
 		originalPosition = bodypart_Head.transform.position;
 		originalRotation = bodypart_Head.transform.rotation;
@@ -46,14 +46,18 @@ public class Player_Controller : MonoBehaviour
 	{
 		if (startAnimation == true) 
 		{
-			// these values need to be multiplied by a multiplier depending on how degrees are measured by the sensor
-			float yawMovement = -1.0f * (movementData [count] [2] - movementData [count - 1] [2]);
-			float pitchMovement = 1.0f * (movementData [count] [1] - movementData [count - 1] [1]);
-			float rollMovement = -1.0f * (movementData [count] [3] - movementData [count - 1] [3]);
+//			float pitchMovement = movementData [count] [1] - movementData [count - 1] [1];
+//			float yawMovement = movementData [count] [2] - movementData [count - 1] [2];
+//			float rollMovement = movementData [count] [3] - movementData [count - 1] [3];
 
-			performRotation(rollMovement, pitchMovement, yawMovement);
+			// for quaternion
+			float pitchMovement = movementData [count] [1];
+			float yawMovement = movementData [count] [2];
+			float rollMovement = movementData [count] [3];
 
-			errorDialog.text = bodypart_Head.transform.position.ToString("F");
+			performRotation(pitchMovement, yawMovement, rollMovement);
+
+			errorDialog.text = bodypart_Head.transform.localPosition.ToString("F");
 			count = count + 1;
 		}
 		else
@@ -82,17 +86,15 @@ public class Player_Controller : MonoBehaviour
 		}
 	}
 
-	void performRotation(float rollMovement, float pitchMovement, float yawMovement)
+	void performRotation(float pitchMovement, float yawMovement, float rollMovement)
 	{
-		bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.59f, 0.0f),
-		                                      Vector3.up + bodypart_Head.transform.position,
-		                                      yawMovement);
-		bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.59f, 0.0f),
-		                                      Vector3.right + bodypart_Head.transform.position,
-		                                      pitchMovement);
-		bodypart_Head.transform.RotateAround (new Vector3 (0.0f, 1.59f, 0.0f),
-		                                      Vector3.forward + bodypart_Head.transform.position,
-		                                      rollMovement);
+		// Method 1
+//		bodypart_Head.transform.Rotate (0.0f, 0.0f, -pitchMovement, Space.Self);
+//		bodypart_Head.transform.Rotate (rollMovement, 0.0f, 0.0f, Space.Self);
+//		bodypart_Head.transform.Rotate (0.0f, -yawMovement, 0.0f, Space.Self);
+
+		// Method 2
+		bodypart_Head.transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
 	}
 
 }
