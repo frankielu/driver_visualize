@@ -6,7 +6,6 @@ using System.Linq;
 
 public class Player_Controller : MonoBehaviour 
 {
-	public GameObject bodypart_Head;
 	public GUIText errorDialog;
 	public TextAsset textDataFile;
 
@@ -36,20 +35,16 @@ public class Player_Controller : MonoBehaviour
 			return;
 		}
 
-//		performRotation (movementData[0][1], movementData[0][2], movementData[0][3]);
+		performRotation (movementData[0][1], movementData[0][2], movementData[0][3]);
 
-		originalPosition = bodypart_Head.transform.position;
-		originalRotation = bodypart_Head.transform.rotation;
+		originalPosition = transform.position;
+		originalRotation = transform.rotation;
 	}
 
 	void FixedUpdate () 
 	{
 		if (startAnimation == true) 
 		{
-//			float pitchMovement = movementData [count] [1] - movementData [count - 1] [1];
-//			float yawMovement = movementData [count] [2] - movementData [count - 1] [2];
-//			float rollMovement = movementData [count] [3] - movementData [count - 1] [3];
-
 			// for quaternion
 			float pitchMovement = movementData [count] [1];
 			float yawMovement = movementData [count] [2];
@@ -57,13 +52,13 @@ public class Player_Controller : MonoBehaviour
 
 			performRotation(pitchMovement, yawMovement, rollMovement);
 
-			errorDialog.text = bodypart_Head.transform.localPosition.ToString("F");
+			errorDialog.text = transform.localPosition.ToString("F");
 			count = count + 1;
 		}
 		else
 		{
-			bodypart_Head.transform.position = originalPosition;
-			bodypart_Head.transform.rotation = originalRotation;
+			transform.position = originalPosition;
+			transform.rotation = originalRotation;
 			count = 1;
 		}
 	}
@@ -88,13 +83,7 @@ public class Player_Controller : MonoBehaviour
 
 	void performRotation(float pitchMovement, float yawMovement, float rollMovement)
 	{
-		// Method 1
-//		bodypart_Head.transform.Rotate (0.0f, 0.0f, -pitchMovement, Space.Self);
-//		bodypart_Head.transform.Rotate (rollMovement, 0.0f, 0.0f, Space.Self);
-//		bodypart_Head.transform.Rotate (0.0f, -yawMovement, 0.0f, Space.Self);
-
-		// Method 2
-		bodypart_Head.transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
+		transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
 	}
 
 }
