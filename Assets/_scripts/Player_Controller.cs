@@ -8,6 +8,7 @@ public class Player_Controller : MonoBehaviour
 {
 	public GUIText errorDialog;
 	public TextAsset textDataFile;
+	public GameObject player_Head;
 
 	private Vector3 originalPosition;
 	private Quaternion originalRotation;
@@ -37,8 +38,8 @@ public class Player_Controller : MonoBehaviour
 
 		performRotation (movementData[0][1], movementData[0][2], movementData[0][3]);
 
-		originalPosition = transform.position;
-		originalRotation = transform.rotation;
+		originalPosition = player_Head.transform.position;
+		originalRotation = player_Head.transform.rotation;
 	}
 
 	void FixedUpdate () 
@@ -57,8 +58,8 @@ public class Player_Controller : MonoBehaviour
 		}
 		else
 		{
-			transform.position = originalPosition;
-			transform.rotation = originalRotation;
+			player_Head.transform.position = originalPosition;
+			player_Head.transform.rotation = originalRotation;
 			count = 1;
 		}
 	}
@@ -83,7 +84,7 @@ public class Player_Controller : MonoBehaviour
 
 	void performRotation(float pitchMovement, float yawMovement, float rollMovement)
 	{
-		transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
+		player_Head.transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
 	}
 
 }
