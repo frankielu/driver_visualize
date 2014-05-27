@@ -3,22 +3,41 @@ using System.Collections;
 
 public class CameraController : MonoBehaviour 
 {
-	public GameObject player;
+//	public GameObject player;
+	public float motionSmoothing = 3f; // adjust smoothing of camera motion
 	public float perspectiveZoomSpeed = 0.4f;
 	public float orthoZoomSpeed = 0.4f;
 	public float panSpeed = 200;
+
+	Transform standardPos; // usual position of camera
+	Transform lookAtVehiclePos; // position of the camera when looking at the vehicle
 	private Vector3 offset;
+
+	void Start ()
+	{
+		// initialize references
+		if (GameObject.Find ("CamPos"))
+			standardPos = GameObject.Find ("CamPos").transform;
+
+		if(GameObject.Find ("LookAtVehiclePos"))
+			lookAtVehiclePos = GameObject.Find ("LookAtVehiclePos").transform;
+	}
+
+	void FixedUpdate ()
+	{
+		// Point the camera at the standard position and direction
+		transform.position = Vector3.Lerp (transform.position, standardPos.position, Time.deltaTime * motionSmoothing);
+		transform.forward = Vector3.Lerp (transform.forward, standardPos.forward, Time.deltaTime * motionSmoothing);
+	}
 
 	void Update () 
 	{
 		// pan the camera
-		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
-		{
-			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
-			transform.RotateAround(player.transform.position, Vector3.up, touchDeltaPosition.x * panSpeed * Time.deltaTime);
-//			transform.RotateAround(player.transform.position, Vector3.right, touchDeltaPosition.y * panSpeed * Time.deltaTime);
-//			transform.LookAt(player.transform.position + new Vector3(0.0f, 1.0f, 0.0f));
-		}
+//		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
+//		{
+//			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
+//			transform.RotateAround(player.transform.position, Vector3.up, touchDeltaPosition.x * panSpeed * Time.deltaTime);
+//		}
 
 		// zoom the camera in and out
 		if (Input.touchCount == 2) 

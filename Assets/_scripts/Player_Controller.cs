@@ -4,15 +4,25 @@ using System;
 using System.IO;
 using System.Linq;
 
+[RequireComponent (typeof (Animator))]
+[RequireComponent (typeof (CapsuleCollider))]
+[RequireComponent (typeof (Rigidbody))]
 public class Player_Controller : MonoBehaviour 
 {
+	[System.NonSerialized]
+	public float lookWeight;
+
+	[System.NonSerialized]
+	public Transform enemy;
+
 	public GUIText errorDialog;
 	public TextAsset textDataFile;
 	public GameObject player_Head;
-
+	
 	private Vector3 originalPosition;
 	private Quaternion originalRotation;
 	private bool startAnimation = false;
+	private bool changeFrame = false; // controls whether the next set of data points should be pushed
 	private int count = 1;
 	private float[][] movementData = null;
 
@@ -36,8 +46,6 @@ public class Player_Controller : MonoBehaviour
 			return;
 		}
 
-		performRotation (movementData[0][1], movementData[0][2], movementData[0][3]);
-
 		originalPosition = player_Head.transform.position;
 		originalRotation = player_Head.transform.rotation;
 	}
@@ -54,13 +62,21 @@ public class Player_Controller : MonoBehaviour
 			performRotation(pitchMovement, yawMovement, rollMovement);
 
 			errorDialog.text = transform.localPosition.ToString("F");
-			count = count + 1;
+
+			// iterate every other count
+			if (changeFrame == true)
+			{
+				count = count + 1;
+				changeFrame = false;
+			}
+			else changeFrame = true;
 		}
 		else
 		{
 			player_Head.transform.position = originalPosition;
 			player_Head.transform.rotation = originalRotation;
 			count = 1;
+			changeFrame = false;
 		}
 	}
 
@@ -84,7 +100,10 @@ public class Player_Controller : MonoBehaviour
 
 	void performRotation(float pitchMovement, float yawMovement, float rollMovement)
 	{
-		player_Head.transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
+		player_Head.transform.rotation = Quaternion.Lerp (player_Head.transform.rotation, Quaternion.Euler(rollMovement, -yawMovement, -pitchMovement), 
+		                                                  0.5f);
+		                                       
+//		player_Head.transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
 	}
 
 }
