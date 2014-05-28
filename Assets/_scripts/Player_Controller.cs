@@ -18,13 +18,36 @@ public class Player_Controller : MonoBehaviour
 	public GUIText errorDialog;
 	public TextAsset textDataFile;
 	public GameObject player_Head;
+
+	private Animator anim;
 	
 	private Vector3 originalPosition;
 	private Quaternion originalRotation;
-	private bool startAnimation = false;
+	private bool _headIsMoving;
 	private bool changeFrame = false; // controls whether the next set of data points should be pushed
 	private int count = 1;
 	private float[][] movementData = null;
+	
+ 	public bool headIsMoving
+	{
+		get { return _headIsMoving; }
+		set
+		{
+			_headIsMoving = value;
+			if (value == false)
+			{
+				player_Head.transform.position = originalPosition;
+				player_Head.transform.rotation = originalRotation;
+				count = 1;
+				changeFrame = false;
+			}
+			else
+			{
+				originalPosition = player_Head.transform.position;
+				originalRotation = player_Head.transform.rotation;
+			}
+		}
+	}
 
 	// Use this for initialization
 	void Start () 
@@ -46,13 +69,12 @@ public class Player_Controller : MonoBehaviour
 			return;
 		}
 
-		originalPosition = player_Head.transform.position;
-		originalRotation = player_Head.transform.rotation;
+		anim = GetComponent<Animator> ();
 	}
 
 	void FixedUpdate () 
 	{
-		if (startAnimation == true) 
+		if (headIsMoving == true) 
 		{
 			// for quaternion
 			float pitchMovement = movementData [count] [1];
@@ -71,12 +93,14 @@ public class Player_Controller : MonoBehaviour
 			}
 			else changeFrame = true;
 		}
-		else
+	}
+
+	void Update()
+	{
+		// enable animation on Space key
+		if (Input.GetButtonDown("Jump"))
 		{
-			player_Head.transform.position = originalPosition;
-			player_Head.transform.rotation = originalRotation;
-			count = 1;
-			changeFrame = false;
+			anim.enabled = anim.enabled == true ? false : true;
 		}
 	}
 
@@ -93,8 +117,8 @@ public class Player_Controller : MonoBehaviour
 	{
 		if(GUI.Button(new Rect(20,60,80,50), "Reset")) 
 		{
-			if (startAnimation == true) startAnimation = false;
-			else startAnimation = true;
+			if (headIsMoving == true) headIsMoving = false;
+			else headIsMoving = true;
 		}
 	}
 
