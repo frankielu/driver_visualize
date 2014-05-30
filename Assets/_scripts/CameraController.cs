@@ -3,15 +3,17 @@ using System.Collections;
 
 public class CameraController : MonoBehaviour 
 {
-//	public GameObject player;
-	public float motionSmoothing = 3f; // adjust smoothing of camera motion
-	public float perspectiveZoomSpeed = 0.4f;
-	public float orthoZoomSpeed = 0.4f;
-	public float panSpeed = 200;
+	public GUIText errorDialog;
+	public float motionSmoothing = 2f; // adjust smoothing of camera motion
+	public float zoomSpeed = 0.05f;
+	public float panSpeed = 20f;
+	public float maxRotateSpeed = 10.0f;
 
 	Transform standardPos; // usual position of camera
 	Transform lookAtVehiclePos; // position of the camera when looking at the vehicle
+	Transform driver; // position of the player
 	private Vector3 offset;
+	private Vector2 deltaMousePos;
 
 	void Start ()
 	{
@@ -21,6 +23,11 @@ public class CameraController : MonoBehaviour
 
 		if(GameObject.Find ("LookAtVehiclePos"))
 			lookAtVehiclePos = GameObject.Find ("LookAtVehiclePos").transform;
+
+		if (GameObject.Find ("Driver"))
+			driver = GameObject.Find ("Driver").transform;
+
+
 	}
 
 	void FixedUpdate ()
@@ -33,11 +40,13 @@ public class CameraController : MonoBehaviour
 	void Update () 
 	{
 		// pan the camera
-//		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
-//		{
-//			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
-//			transform.RotateAround(player.transform.position, Vector3.up, touchDeltaPosition.x * panSpeed * Time.deltaTime);
-//		}
+		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
+		{
+			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
+			// set a minimum rotate speed or the lerp will mess it up
+			standardPos.transform.RotateAround(driver.position, Vector3.up, Mathf.Clamp(touchDeltaPosition.x * panSpeed * Time.deltaTime,
+			                                                                            -maxRotateSpeed, maxRotateSpeed));
+		}
 
 		// zoom the camera in and out
 		if (Input.touchCount == 2) 
@@ -51,18 +60,10 @@ public class CameraController : MonoBehaviour
 			float prevDeltaMag = (touch0PrevPos - touch1PrevPos).magnitude;
 			float touchDeltaMag = (touch0.position - touch1.position).magnitude;
 
-			float deltaMagDiff = prevDeltaMag - touchDeltaMag;
+			float deltaMagDiff = touchDeltaMag - prevDeltaMag;
 
-			if (camera.isOrthoGraphic)
-			{
-				camera.orthographicSize += deltaMagDiff * orthoZoomSpeed;
-				camera.orthographicSize = Mathf.Max(camera.orthographicSize, 0.1f);
-			}
-			else
-			{
-				camera.fieldOfView += deltaMagDiff * perspectiveZoomSpeed;
-				camera.fieldOfView = Mathf.Clamp(camera.fieldOfView, 15, 140);
-			}
+			standardPos.transform.position += standardPos.forward * deltaMagDiff * zoomSpeed * Time.deltaTime;
+			errorDialog.text = standardPos.transform.ToString();
 		}
 	}
 }

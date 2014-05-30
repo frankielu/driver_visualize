@@ -83,8 +83,6 @@ public class Player_Controller : MonoBehaviour
 
 			performRotation(pitchMovement, yawMovement, rollMovement);
 
-			errorDialog.text = transform.localPosition.ToString("F");
-
 			// iterate every other count
 			if (changeFrame == true)
 			{
