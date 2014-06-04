@@ -57,7 +57,6 @@
      <Compile Include="Assets\_scripts\Player_Controller.cs" />
      <Compile Include="Assets\_scripts\UDP_Connector.cs" />
      <None Include="Assets\_scripts\ashishVideo_hp.txt" />
-     <None Include="Assets\dependencies\ashishVideo_hp.txt" />
  <Reference Include="Assets\TouchScript\Plugins\TouchScript">
  <HintPath>Assets\TouchScript\Plugins\TouchScript.dll</HintPath>
  </Reference>

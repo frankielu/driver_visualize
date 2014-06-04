@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 using System;
+using System.Linq;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -19,7 +22,8 @@ public class UDP_Connector : MonoBehaviour
 	public static int port = 8000;
 	public static string IP = "127.0.0.1";
 	public static string lastReceivedUDPPacket = String.Empty;
-	public static string allReceivedUDPPackets = String.Empty;
+
+	public static float[] lastDataReceived;
 
 	void Start()
 	{
@@ -28,7 +32,7 @@ public class UDP_Connector : MonoBehaviour
 
 	void Update()
 	{
-		errorDialog.text = allReceivedUDPPackets;
+		errorDialog.text = lastReceivedUDPPacket;
 	}
 
 	private static void startUDPThread()
@@ -59,11 +63,13 @@ public class UDP_Connector : MonoBehaviour
 
 				// print results
 				print(">> " + text);
+
+				// convert to float[] and add to queue
+				lastDataReceived = text.Split(',').Select(x => float.Parse(x)).ToArray();
 				
 				// latest UDPPacket
 				lastReceivedUDPPacket = text;
-				
-				allReceivedUDPPackets = allReceivedUDPPackets + text;
+
 			}
 			catch (Exception e)
 			{
