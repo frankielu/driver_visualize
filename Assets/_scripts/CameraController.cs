@@ -10,7 +10,6 @@ public class CameraController : MonoBehaviour
 	public float maxRotateSpeed = 10.0f;
 
 	Transform standardPos; // usual position of camera
-	Transform lookAtVehiclePos; // position of the camera when looking at the vehicle
 	Transform driver; // position of the player
 	private Vector3 offset;
 	private Vector2 deltaMousePos;
@@ -21,13 +20,8 @@ public class CameraController : MonoBehaviour
 		if (GameObject.Find ("CamPos"))
 			standardPos = GameObject.Find ("CamPos").transform;
 
-		if(GameObject.Find ("LookAtVehiclePos"))
-			lookAtVehiclePos = GameObject.Find ("LookAtVehiclePos").transform;
-
 		if (GameObject.Find ("Driver"))
 			driver = GameObject.Find ("Driver").transform;
-
-
 	}
 
 	void FixedUpdate ()
@@ -63,7 +57,6 @@ public class CameraController : MonoBehaviour
 			float deltaMagDiff = touchDeltaMag - prevDeltaMag;
 
 			standardPos.transform.position += standardPos.forward * deltaMagDiff * zoomSpeed * Time.deltaTime;
-			errorDialog.text = standardPos.transform.ToString();
 		}
 	}
 }
