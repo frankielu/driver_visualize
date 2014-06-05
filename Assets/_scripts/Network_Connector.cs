@@ -8,6 +8,7 @@ using System.IO;
 public class Network_Connector : MonoBehaviour 
 {
 	public GUIText errorDialog;
+	public static bool networkEnabled = false;
 	public static float[] lastDataReceived = new float[7] {0.0f,0.0f,0.0f,0.0f,1.0f,1.0f,0.0f};
 
 	private static string _IPAddress = "137.110.68.254:8000";
@@ -23,9 +24,9 @@ public class Network_Connector : MonoBehaviour
 		}
 	}
 
-	void Update()
+	void FixedUpdate()
 	{
-		readTextFile (url);
+		if (networkEnabled != false) readTextFile(url);
 	}
 
 	void readTextFile(string url)
@@ -43,10 +44,12 @@ public class Network_Connector : MonoBehaviour
 		if (www.error == null)
 		{
 			lastDataReceived = www.text.Split(',').Select(x => float.Parse(x)).ToArray();
+			errorDialog.text = String.Empty;
 		}
 		else
 		{
 			Debug.Log("WWW Error: " + www.error);
+			errorDialog.text = "Error Retriving Data";
 		}
 	}
 }

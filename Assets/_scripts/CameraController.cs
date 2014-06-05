@@ -39,6 +39,7 @@ public class CameraController : MonoBehaviour
 		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
 		{
 			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
+
 			// set a minimum rotate speed or the lerp will mess it up
 			standardPos.transform.RotateAround(driver.position, Vector3.up, Mathf.Clamp(touchDeltaPosition.x * touchPanSpeed * Time.deltaTime,
                                                                             -maxRotateSpeed, maxRotateSpeed));
@@ -72,7 +73,7 @@ public class CameraController : MonoBehaviour
 			standardPos.transform.position += standardPos.forward * deltaMagDiff * touchZoomSpeed * Time.deltaTime;
 		}
 
-		if (Mathf.Abs(Input.GetAxis("Mouse ScrollWheel")) > 0)
+		if (Input.GetAxis("Mouse ScrollWheel") != 0.0f)
 		{
 			standardPos.transform.position += standardPos.forward * Input.GetAxis("Mouse ScrollWheel") * mouseZoomSpeed * Time.deltaTime;
 		}

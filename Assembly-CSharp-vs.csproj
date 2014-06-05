@@ -52,7 +52,6 @@
      <Compile Include="Assets\Scripts\Samoflange.cs" />
      <Compile Include="Assets\Scripts\ThirdPersonCamera.cs" />
      <Compile Include="Assets\_scripts\CameraController.cs" />
-     <Compile Include="Assets\_scripts\DebugText.cs" />
      <Compile Include="Assets\_scripts\Network_Connector.cs" />
      <Compile Include="Assets\_scripts\Player_Controller.cs" />
      <None Include="Assets\_scripts\ashishVideo_hp.txt" />

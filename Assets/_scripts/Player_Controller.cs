@@ -10,9 +10,6 @@ using System.Linq;
 public class Player_Controller : MonoBehaviour 
 {
 	[System.NonSerialized]
-	public float lookWeight;
-
-	[System.NonSerialized]
 	public Transform enemy;
 
 	public GUIText errorDialog;
@@ -76,7 +73,7 @@ public class Player_Controller : MonoBehaviour
 	private float leftEyeArea = 1.0f;
 	private float rightEyeArea = 1.0f;
 	
-	public bool headIsMoving
+	public bool driverEnabled
 	{
 		get { return _headIsMoving; }
 		set
@@ -137,22 +134,25 @@ public class Player_Controller : MonoBehaviour
 				rollMovement = originalRotation.eulerAngles.x;
 				yawMovement = originalRotation.eulerAngles.y;
 				pitchMovement = originalRotation.eulerAngles.z;
+
+				Network_Connector.networkEnabled = true;
 			}
 		}
 	}
-
-	// Use this for initialization
+	
 	void Start () 
 	{
-		headIsMoving = true;
-		headIsMoving = false;
+		// work around for positioning for now
+		driverEnabled = true;
+		driverEnabled = false;
+
 		Screen.orientation = ScreenOrientation.LandscapeLeft;
-		errorDialog.text = "No errors.";
+		errorDialog.text = String.Empty;
 	}
 
-	void Update () 
+	void FixedUpdate () 
 	{
-		if (headIsMoving == true) 
+		if (driverEnabled == true) 
 		{
 			float[] mostRecentData = Network_Connector.lastDataReceived;
 
@@ -170,7 +170,7 @@ public class Player_Controller : MonoBehaviour
 
 	void LateUpdate ()
 	{
-		// the back button of an android device quits the game
+		// the back button of an android device quits the game, esc for keyboard input
 		if (Input.GetKeyDown(KeyCode.Escape))
 		{
 			Application.Quit();
@@ -179,7 +179,7 @@ public class Player_Controller : MonoBehaviour
 
 	void OnGUI()
 	{
-		GUI.color = headIsMoving == true ? Color.green : Color.red;
+		GUI.color = driverEnabled == true ? Color.green : Color.red;
 
 		// client can change ip address to match the server
 		Network_Connector.IPAddress = GUI.TextField (new Rect (10f,10f,Screen.width*0.05f,Screen.height*0.03f), Network_Connector.IPAddress, 20);
@@ -188,8 +188,8 @@ public class Player_Controller : MonoBehaviour
 		// increase text size
 		if(GUI.Button(new Rect(10f,15f+Screen.height*0.05f,Screen.width*0.05f,Screen.height*0.05f), "On/Off")) 
 		{
-			if (headIsMoving == true) headIsMoving = false;
-			else headIsMoving = true;
+			if (driverEnabled == true) driverEnabled = false;
+			else driverEnabled = true;
 		}
 	}
 
@@ -225,7 +225,6 @@ public class Player_Controller : MonoBehaviour
 		Rlastoffset = 2*Roffset;
 		Llastrotate = Lrotate;
 		Rlastrotate = Rrotate;
-		//errorDialog.text = lastoffset.ToString();
 	}
 
 	void eyeclose() 
