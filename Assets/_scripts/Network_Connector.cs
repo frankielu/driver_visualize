@@ -1,11 +1,35 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Network_Connector : MonoBehaviour {
-	
-	void Start () 
+using System;
+using System.Linq;
+using System.IO;
+
+public class Network_Connector : MonoBehaviour 
+{
+	public GUIText errorDialog;
+	public static float[] lastDataReceived = new float[7] {0.0f,0.0f,0.0f,0.0f,1.0f,1.0f,0.0f};
+
+	private static string _IPAddress = "137.110.68.254:8000";
+	private static string url;
+
+	public static string IPAddress
 	{
-		string url = "0.0.0.0:8000";
+		get { return _IPAddress; }
+		set 
+		{ 
+			_IPAddress = value.Trim();
+			url = "http://" + _IPAddress + "/singleData.txt";
+		}
+	}
+
+	void Update()
+	{
+		readTextFile (url);
+	}
+
+	void readTextFile(string url)
+	{
 		WWW www = new WWW (url);
 		StartCoroutine (WaitForRequest (www));
 	}
@@ -18,7 +42,7 @@ public class Network_Connector : MonoBehaviour {
 		// check for errors
 		if (www.error == null)
 		{
-			Debug.Log("WWW Working: " + www.text);
+			lastDataReceived = www.text.Split(',').Select(x => float.Parse(x)).ToArray();
 		}
 		else
 		{

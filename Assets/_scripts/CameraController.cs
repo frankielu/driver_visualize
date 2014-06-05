@@ -5,8 +5,10 @@ public class CameraController : MonoBehaviour
 {
 	public GUIText errorDialog;
 	public float motionSmoothing = 2f; // adjust smoothing of camera motion
-	public float zoomSpeed = 0.05f;
-	public float panSpeed = 20f;
+	public float touchZoomSpeed;
+	public float touchPanSpeed;
+	public float mouseZoomSpeed;
+	public float mousePanSpeed;
 	public float maxRotateSpeed = 10.0f;
 
 	Transform standardPos; // usual position of camera
@@ -33,16 +35,27 @@ public class CameraController : MonoBehaviour
 
 	void Update () 
 	{
-		// pan the camera
+		// pan the camera on touch or mouse
 		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
 		{
 			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
 			// set a minimum rotate speed or the lerp will mess it up
-			standardPos.transform.RotateAround(driver.position, Vector3.up, Mathf.Clamp(touchDeltaPosition.x * panSpeed * Time.deltaTime,
-			                                                                            -maxRotateSpeed, maxRotateSpeed));
+			standardPos.transform.RotateAround(driver.position, Vector3.up, Mathf.Clamp(touchDeltaPosition.x * touchPanSpeed * Time.deltaTime,
+                                                                            -maxRotateSpeed, maxRotateSpeed));
 		}
 
-		// zoom the camera in and out
+		if (Input.GetKey(KeyCode.LeftArrow))
+		{
+			standardPos.transform.RotateAround(driver.position, Vector3.up, mousePanSpeed * Time.deltaTime);
+		}
+
+		if (Input.GetKey(KeyCode.RightArrow))
+		{
+			standardPos.transform.RotateAround(driver.position, Vector3.up, -mousePanSpeed * Time.deltaTime);
+		}
+
+		// make this scale with screen resolution in the future
+		// zoom the camera in and out on two finger touch or scroll wheel
 		if (Input.touchCount == 2) 
 		{
 			Touch touch0 = Input.GetTouch(0);
@@ -56,7 +69,12 @@ public class CameraController : MonoBehaviour
 
 			float deltaMagDiff = touchDeltaMag - prevDeltaMag;
 
-			standardPos.transform.position += standardPos.forward * deltaMagDiff * zoomSpeed * Time.deltaTime;
+			standardPos.transform.position += standardPos.forward * deltaMagDiff * touchZoomSpeed * Time.deltaTime;
+		}
+
+		if (Mathf.Abs(Input.GetAxis("Mouse ScrollWheel")) > 0)
+		{
+			standardPos.transform.position += standardPos.forward * Input.GetAxis("Mouse ScrollWheel") * mouseZoomSpeed * Time.deltaTime;
 		}
 	}
 }

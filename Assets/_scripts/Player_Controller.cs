@@ -17,6 +17,7 @@ public class Player_Controller : MonoBehaviour
 
 	public GUIText errorDialog;
 	public TextAsset textDataFile;
+
 	public GameObject player_Head;
 	public GameObject player_leftEye;
 	public GameObject player_rightEye;
@@ -67,10 +68,7 @@ public class Player_Controller : MonoBehaviour
 	private Quaternion originalRHFP1Rotation;
 	private Quaternion originalRHFP2Rotation;
 	private Quaternion originalRHFP3Rotation;
-	private bool iseyeclose = false;
-	private bool isrhonshift = false;
 	private bool _headIsMoving;
-	private float[][] movementData = null;
 
 	private float pitchMovement;
 	private float yawMovement;
@@ -150,27 +148,13 @@ public class Player_Controller : MonoBehaviour
 		headIsMoving = false;
 		Screen.orientation = ScreenOrientation.LandscapeLeft;
 		errorDialog.text = "No errors.";
-
-		// load data file
-		try
-		{
-			string[] splitLines = textDataFile.text.Split(new string[] { "\n" }, StringSplitOptions.None);
-			string[][] linesDelimited = splitLines.Select(line => line.Split(',').ToArray()).ToArray();
-
-			movementData = linesDelimited.Select(line => line.Select(x => float.Parse(x)).ToArray()).ToArray();
-		}
-		catch
-		{
-			errorDialog.text = "Unable to read text file!";
-			return;
-		}
 	}
 
-	void FixedUpdate () 
+	void Update () 
 	{
 		if (headIsMoving == true) 
 		{
-			float[] mostRecentData = UDP_Connector.lastDataReceived;
+			float[] mostRecentData = Network_Connector.lastDataReceived;
 
 			// for quaternion
 			pitchMovement = mostRecentData [1];
@@ -195,49 +179,24 @@ public class Player_Controller : MonoBehaviour
 
 	void OnGUI()
 	{
-		if(GUI.Button(new Rect(20,60,80,30), "Reset")) 
+		GUI.color = headIsMoving == true ? Color.green : Color.red;
+
+		// client can change ip address to match the server
+		Network_Connector.IPAddress = GUI.TextField (new Rect (10f,10f,Screen.width*0.05f,Screen.height*0.03f), Network_Connector.IPAddress, 20);
+		// add input validation in the future
+
+		// increase text size
+		if(GUI.Button(new Rect(10f,15f+Screen.height*0.05f,Screen.width*0.05f,Screen.height*0.05f), "On/Off")) 
 		{
 			if (headIsMoving == true) headIsMoving = false;
 			else headIsMoving = true;
 		}
-
-		if(GUI.Button(new Rect(20,30,80,30), "Wink")) 
-		{
-			if (iseyeclose == false)
-			{
-				eyeclose();
-				iseyeclose = true;
-			}
-			else
-			{
-				eyeopen();
-				iseyeclose = false;
-			}
-		}
-
-		if(GUI.Button(new Rect(20,0,80,30), "Hand")) 
-		{
-			if (isrhonshift == false)
-			{
-				handonshift();
-				isrhonshift = true;
-			}
-			else
-			{
-				handonwheel();
-				isrhonshift = false;
-			}
-		}
-
-
 	}
 
 	void performRotation(float pitchMovement, float yawMovement, float rollMovement)
 	{
 		player_Head.transform.rotation = Quaternion.Lerp (player_Head.transform.rotation, Quaternion.Euler(rollMovement, -yawMovement, -pitchMovement), 
-		                                                  0.5f);
-		                                       
-//		player_Head.transform.rotation = Quaternion.Euler (rollMovement, -yawMovement, -pitchMovement);
+		                                                  0.2f);                                 
 	}
 
 	void performEyeBlink(float leftEyeArea, float rightEyeArea)
@@ -267,7 +226,6 @@ public class Player_Controller : MonoBehaviour
 		Llastrotate = Lrotate;
 		Rlastrotate = Rrotate;
 		//errorDialog.text = lastoffset.ToString();
-
 	}
 
 	void eyeclose() 
