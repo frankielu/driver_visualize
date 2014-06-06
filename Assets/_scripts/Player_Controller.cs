@@ -9,11 +9,13 @@ using System.Linq;
 [RequireComponent (typeof (Rigidbody))]
 public class Player_Controller : MonoBehaviour 
 {
+	#region Variable Declarations
+
 	[System.NonSerialized]
 	public Transform enemy;
 
+	// debug view
 	public GUIText errorDialog;
-	public TextAsset textDataFile;
 
 	public GameObject player_Head;
 	public GameObject player_leftEye;
@@ -23,7 +25,9 @@ public class Player_Controller : MonoBehaviour
 	public GameObject player_rightUEL; //Upper eyelid
 	public GameObject player_rightLEL; //Lower eyelid
 	public GameObject player_rightArm;
+	public GameObject player_leftArm;
 	public GameObject player_rightForeArm;
+	public GameObject player_leftForeArm;
 	public GameObject player_rightHandFI1;
 	public GameObject player_rightHandFI2;
 	public GameObject player_rightHandFI3;
@@ -36,8 +40,21 @@ public class Player_Controller : MonoBehaviour
 	public GameObject player_rightHandFP1;
 	public GameObject player_rightHandFP2;
 	public GameObject player_rightHandFP3;
-	
-	private Vector3 originalPosition;
+	public GameObject player_leftHandFI1;
+	public GameObject player_leftHandFI2;
+	public GameObject player_leftHandFI3;
+	public GameObject player_leftHandFM1;
+	public GameObject player_leftHandFM2;
+	public GameObject player_leftHandFM3;
+	public GameObject player_leftHandFR1;
+	public GameObject player_leftHandFR2;
+	public GameObject player_leftHandFR3;
+	public GameObject player_leftHandFP1;
+	public GameObject player_leftHandFP2;
+	public GameObject player_leftHandFP3;
+
+	// note: refactor names
+	private Vector3 originalHeadPosition;
 	private Vector3 originalLeftUELPos;
 	private Vector3 originalLeftLELPos;
 	private Vector3 originalRightUELPos;
@@ -48,9 +65,13 @@ public class Player_Controller : MonoBehaviour
 	private float Rlastoffset = 0;
 	private float Llastrotate = 0;
 	private float Rlastrotate = 0;
+
+	// face original rotations
 	private Quaternion originalleftEyeRotation;
 	private Quaternion originalrightEyeRotation;
-	private Quaternion originalRotation;
+	private Quaternion originalHeadRotation;
+
+	//right hand original rotations
 	private Quaternion originalRARotation;
 	private Quaternion originalRFARotation;
 	private Quaternion originalRHFI1Rotation;
@@ -65,13 +86,42 @@ public class Player_Controller : MonoBehaviour
 	private Quaternion originalRHFP1Rotation;
 	private Quaternion originalRHFP2Rotation;
 	private Quaternion originalRHFP3Rotation;
-	private bool _headIsMoving;
 
-	private float pitchMovement;
-	private float yawMovement;
-	private float rollMovement;
-	private float leftEyeArea = 1.0f;
-	private float rightEyeArea = 1.0f;
+	//left hand original rotations
+	private Quaternion originalLARotation;
+	private Quaternion originalLFARotation;
+	private Quaternion originalLHFI1Rotation;
+	private Quaternion originalLHFI2Rotation;
+	private Quaternion originalLHFI3Rotation;
+	private Quaternion originalLHFM1Rotation;
+	private Quaternion originalLHFM2Rotation;
+	private Quaternion originalLHFM3Rotation;
+	private Quaternion originalLHFR1Rotation;
+	private Quaternion originalLHFR2Rotation;
+	private Quaternion originalLHFR3Rotation;
+	private Quaternion originalLHFP1Rotation;
+	private Quaternion originalLHFP2Rotation;
+	private Quaternion originalLHFP3Rotation;
+
+	// switches and presets
+	private bool _headIsMoving;
+	private bool isrhclose = true;
+	private bool islhclose = true;
+	private Vector3 preset = new Vector3 (-23.49268f, 1.148f, -0.15f);
+//	private Vector3 shiftwc = new Vector3 (-23.2375f, 1.042182f, 0.443f);
+
+	private float headPitchValue;
+	private float headYawValue;
+	private float headRollValue;
+	private float leftHandXValue;
+	private float leftHandYValue;
+	private float rightHandXValue;
+	private float rightHandYValue;
+
+	private float leftEyeAreaValue = 1.0f;
+	private float rightEyeAreaValue = 1.0f;
+
+	#endregion
 	
 	public bool driverEnabled
 	{
@@ -81,14 +131,19 @@ public class Player_Controller : MonoBehaviour
 			_headIsMoving = value;
 			if (value == false)
 			{
-				player_Head.transform.position = originalPosition;
-				player_Head.transform.rotation = originalRotation;
+				// head
+				player_Head.transform.position = originalHeadPosition;
+				player_Head.transform.rotation = originalHeadRotation;
+
+				// eyes
 				player_leftUEL.transform.position = originalLeftUELPos;
 				player_leftLEL.transform.position = originalLeftLELPos;
 				player_rightUEL.transform.position = originalRightUELPos;
 				player_rightLEL.transform.position = originalRightLELPos;
 				player_rightEye.transform.rotation = originalrightEyeRotation;
 				player_leftEye.transform.rotation = originalleftEyeRotation;
+
+				// right arm
 				player_rightArm.transform.rotation = originalRARotation;
 				player_rightForeArm.transform.rotation = originalRFARotation;
 				player_rightHandFI1.transform.rotation = originalRHFI1Rotation;
@@ -103,11 +158,35 @@ public class Player_Controller : MonoBehaviour
 				player_rightHandFP1.transform.rotation = originalRHFP1Rotation;
 				player_rightHandFP2.transform.rotation = originalRHFP2Rotation;
 				player_rightHandFP3.transform.rotation = originalRHFP3Rotation;
+
+				// left arm
+				player_leftArm.transform.rotation = originalLARotation;
+				player_leftForeArm.transform.rotation = originalLFARotation;
+				player_leftHandFI1.transform.rotation = originalLHFI1Rotation;
+				player_leftHandFI2.transform.rotation = originalLHFI2Rotation;
+				player_leftHandFI3.transform.rotation = originalLHFI3Rotation;
+				player_leftHandFM1.transform.rotation = originalLHFM1Rotation;
+				player_leftHandFM2.transform.rotation = originalLHFM2Rotation;
+				player_leftHandFM3.transform.rotation = originalLHFM3Rotation;
+				player_leftHandFR1.transform.rotation = originalLHFR1Rotation;
+				player_leftHandFR2.transform.rotation = originalLHFR2Rotation;
+				player_leftHandFR3.transform.rotation = originalLHFR3Rotation;
+				player_leftHandFP1.transform.rotation = originalLHFP1Rotation;
+				player_leftHandFP2.transform.rotation = originalLHFP2Rotation;
+				player_leftHandFP3.transform.rotation = originalLHFP3Rotation;
+
+				Network_Connector.networkEnabled = false;
 			}
 			else
 			{
-				originalPosition = player_Head.transform.position;
-				originalRotation = player_Head.transform.rotation;
+				// head
+				originalHeadPosition = player_Head.transform.position;
+				originalHeadRotation = player_Head.transform.rotation;
+				headRollValue = originalHeadRotation.eulerAngles.x;
+				headYawValue = originalHeadRotation.eulerAngles.y;
+				headPitchValue = originalHeadRotation.eulerAngles.z;
+
+				// eyes
 				originalLeftUELPos = player_leftUEL.transform.position;
 				originalLeftLELPos = player_leftLEL.transform.position;
 				originalRightUELPos = player_rightUEL.transform.position;
@@ -116,6 +195,8 @@ public class Player_Controller : MonoBehaviour
 				REsize = originalRightUELPos.y - originalRightLELPos.y;
 				originalrightEyeRotation = player_rightEye.transform.rotation;
 				originalleftEyeRotation = player_leftEye.transform.rotation;
+
+				// right arm
 				originalRARotation = player_rightArm.transform.rotation;
 				originalRFARotation = player_rightForeArm.transform.rotation;
 				originalRHFI1Rotation = player_rightHandFI1.transform.rotation;
@@ -131,9 +212,21 @@ public class Player_Controller : MonoBehaviour
 				originalRHFP2Rotation = player_rightHandFP2.transform.rotation;
 				originalRHFP3Rotation = player_rightHandFP3.transform.rotation;
 
-				rollMovement = originalRotation.eulerAngles.x;
-				yawMovement = originalRotation.eulerAngles.y;
-				pitchMovement = originalRotation.eulerAngles.z;
+				// left arm
+				originalLARotation = player_leftArm.transform.rotation;
+				originalLFARotation = player_leftForeArm.transform.rotation;
+				originalLHFI1Rotation = player_leftHandFI1.transform.rotation;
+				originalLHFI2Rotation = player_leftHandFI2.transform.rotation;
+				originalLHFI3Rotation = player_leftHandFI3.transform.rotation;
+				originalLHFM1Rotation = player_leftHandFM1.transform.rotation;
+				originalLHFM2Rotation = player_leftHandFM2.transform.rotation;
+				originalLHFM3Rotation = player_leftHandFM3.transform.rotation;
+				originalLHFR1Rotation = player_leftHandFR1.transform.rotation;
+				originalLHFR2Rotation = player_leftHandFR2.transform.rotation;
+				originalLHFR3Rotation = player_leftHandFR3.transform.rotation;
+				originalLHFP1Rotation = player_leftHandFP1.transform.rotation;
+				originalLHFP2Rotation = player_leftHandFP2.transform.rotation;
+				originalLHFP3Rotation = player_leftHandFP3.transform.rotation;
 
 				Network_Connector.networkEnabled = true;
 			}
@@ -154,17 +247,25 @@ public class Player_Controller : MonoBehaviour
 	{
 		if (driverEnabled == true) 
 		{
+			// get data from server
 			float[] mostRecentData = Network_Connector.lastDataReceived;
+			if (mostRecentData.Length != 11) return;
 
-			// for quaternion
-			pitchMovement = mostRecentData [1];
-			yawMovement =  mostRecentData [2];
-			rollMovement = mostRecentData [3];
-			leftEyeArea = mostRecentData [4];
-			rightEyeArea = mostRecentData [5];
+			headPitchValue = mostRecentData [1];
+			headYawValue =  mostRecentData [2];
+			headRollValue = mostRecentData [3];
+			leftEyeAreaValue = mostRecentData [4];
+			rightEyeAreaValue = mostRecentData [5];
+			leftHandXValue = mostRecentData [7];
+			leftHandYValue = mostRecentData [8];
+			rightHandXValue = mostRecentData [9];
+			rightHandYValue = mostRecentData [10];
 
-			performRotation(pitchMovement, yawMovement, rollMovement);
-			performEyeBlink(leftEyeArea, rightEyeArea);
+			PerformRotation(headPitchValue, headYawValue, headRollValue);
+			PerformEyeBlink(leftEyeAreaValue, rightEyeAreaValue);
+
+			if (leftHandXValue < 0 || leftHandYValue < 0 || rightHandXValue < 0 || rightHandYValue < 0) return;
+			PerformHandMovement(leftHandXValue, leftHandYValue, rightHandXValue, rightHandYValue);
 		}
 	}
 
@@ -193,13 +294,13 @@ public class Player_Controller : MonoBehaviour
 		}
 	}
 
-	void performRotation(float pitchMovement, float yawMovement, float rollMovement)
+	void PerformRotation(float pitchMovement, float yawMovement, float rollMovement)
 	{
-		player_Head.transform.rotation = Quaternion.Lerp (player_Head.transform.rotation, Quaternion.Euler(rollMovement, -yawMovement, -pitchMovement), 
-		                                                  0.2f);                                 
+		player_Head.transform.localRotation = Quaternion.Lerp (player_Head.transform.localRotation, Quaternion.Euler(rollMovement, -yawMovement, -pitchMovement), 
+		                                                  0.4f);                                 
 	}
 
-	void performEyeBlink(float leftEyeArea, float rightEyeArea)
+	void PerformEyeBlink(float leftEyeArea, float rightEyeArea)
 	{
 		float nextLsize = LEsize * leftEyeArea;
 		float nextRsize = REsize * rightEyeArea;
@@ -227,16 +328,30 @@ public class Player_Controller : MonoBehaviour
 		Rlastrotate = Rrotate;
 	}
 
-	void eyeclose() 
+	void Rhandonlap()
 	{
-		player_leftUEL.transform.position = new Vector3(player_leftUEL.transform.position.x, player_leftUEL.transform.position.y - 0.015f, player_leftUEL.transform.position.z);
-		player_leftLEL.transform.position = new Vector3(player_leftLEL.transform.position.x, player_leftLEL.transform.position.y + 0.0000f, player_leftLEL.transform.position.z);
+		Vector3 RAdirection = new Vector3 (-23.5593f, 1.012144f, -0.0541f);
+		Vector3 RFAdirection = new Vector3 (-23.5593f, 0.87f, 0.3144125f);
+		pointRAto (RAdirection);
+		pointRFAto (RFAdirection);
+		if (isrhclose==true){righthandopen ();}
 	}
-
-	void eyeopen()
+	
+	void Lhandonlap()
 	{
-		player_leftUEL.transform.position = new Vector3(player_leftUEL.transform.position.x, player_leftUEL.transform.position.y + 0.015f, player_leftUEL.transform.position.z);
-		player_leftLEL.transform.position = new Vector3(player_leftLEL.transform.position.x, player_leftLEL.transform.position.y - 0.0000f, player_leftLEL.transform.position.z);
+		Vector3 LAdirection = new Vector3 (-24.2f, -0.075f, 1.0678f);
+		Vector3 LFAdirection = new Vector3 (-23.85f, 0.588f, 1.86f);
+		pointLAto (LAdirection);
+		pointLFAto (LFAdirection);
+		if (islhclose == true) {lefthandopen ();}
+	}
+	
+	void wheelposition()
+	{
+		Vector3 RAdirection = new Vector3 (-23.4687f, 1.1476f, 0.126f);
+		Vector3 RFAdirection = new Vector3 (-23.55484f, 1.362127f, 0.443f);
+		pointRAto (RAdirection);
+		pointRFAto (RFAdirection);
 	}
 
 	void handonshift()
@@ -276,6 +391,162 @@ public class Player_Controller : MonoBehaviour
 		player_rightHandFP3.transform.rotation = originalRHFP3Rotation;
 		
 	}
+
+	void PerformHandMovement(float lefthandx, float lefthandy, float righthandx, float righthandy)
+	{
+		Vector3 n = new Vector3(0.0f, -0.8f, 1.0f);
+		n = n / n.magnitude;
+		float Zo = 0.443f;
+		float unitconvert = 0.005f;
+		float[] originalLX = new float[2]{-23.90527f, 147.0f};
+		float[] originalLY = new float[2]{1.416689f, 125.0f};
+		float[] originalRX = new float[2]{-23.55484f, 314.0f};
+		float[] originalRY = new float[2]{1.362127f, 150.0f};
+		
+		float offsetLX = (lefthandx - originalLX [1]) * unitconvert;
+		float offsetLY = (lefthandy - originalLY [1]) * unitconvert;
+		float offsetRX = (righthandx - originalRX [1])* unitconvert;
+		float offsetRY = (righthandy - originalRY [1])* unitconvert;
+		//float offsetLZ = Zo- n.x*offsetLX/n.z - n.y*offsetLY/n.z;
+		//float offsetRZ = Zo - n.x*offsetRX/n.z - n.y*offsetRY/n.z;
+		float LX = originalLX [0] + offsetLX-0.3f;
+		float LY = originalLY [0] - offsetLY+0.3f;
+		float RX = originalRX [0] + offsetRX-0.05f;
+		float RY = originalRY [0] - offsetRY+0.05f;
+		float LZ = Zo - n.x*LX/n.z - n.y*LY/n.z - 0.02f;
+		float RZ = Zo - n.x*RX/n.z - n.y*RY/n.z - 0.02f;
+		if (righthandx == 0 && righthandy == 0) 
+		{
+			Rhandonlap();
+		}
+		else if (RX >= -23.3)
+		{
+			pointRAto(preset);//new Vector3 (-23.5593f, 1.012144f, -0.0541f));
+			pointRFAto(new Vector3(RX, RY, RZ));
+		}
+		else
+		{
+			pointRAto(new Vector3(RX, RY, RZ));
+			pointRFAto(new Vector3(RX, RY, RZ));
+		}
+		if (lefthandx == 0 && lefthandy == 0)
+		{
+			Lhandonlap();
+		}
+		else
+		{
+			pointLAto(new Vector3(LX, LY, LZ));
+			pointLFAto(new Vector3(LX, LY, LZ));
+		}
+		
+		if (isrhclose == true && RX >= -23.3)
+		{
+			righthandopen ();
+		}
+		if (isrhclose ==false && RX <-23.3)
+		{
+			righthandclose();
+		}
+		if (islhclose == true && LX <= -24.20527)
+		{
+			lefthandopen();
+		}
+		if (islhclose == false && LX >-24.20527)
+		{
+			lefthandclose();
+		}
+	}
 	
+	void righthandopen()
+	{
+		player_rightHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, 30.51f));
+		player_rightHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, 88.4f));
+		player_rightHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, 38.38f));
+		player_rightHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f));
+		player_rightHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f));
+		player_rightHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f));
+		player_rightHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f));
+		player_rightHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f));
+		player_rightHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f));
+		player_rightHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f));
+		player_rightHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f));
+		player_rightHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f));
+		isrhclose = false;
+	}
 	
+	void lefthandclose()
+	{
+		player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+		player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+		player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+		player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+		player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+		islhclose = true;
+	}
+
+	void righthandclose()
+	{
+		player_rightHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -30.51f));
+		player_rightHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -88.4f));
+		player_rightHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -38.38f));
+		player_rightHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f));
+		player_rightHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f));
+		player_rightHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f));
+		player_rightHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f));
+		player_rightHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f));
+		player_rightHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f));
+		player_rightHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f));
+		player_rightHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f));
+		player_rightHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f));
+		isrhclose = true;
+	}
+
+	void lefthandopen()
+	{
+		player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+		player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+		player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+		player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+		player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+		islhclose = false;
+	}
+
+	void pointRAto(Vector3 target)
+	{
+		
+		player_rightArm.transform.LookAt (target);
+		player_rightArm.transform.Rotate (new Vector3 (0, -90, 0));
+	}
+	
+	void pointLAto(Vector3 target)
+	{
+		player_leftArm.transform.LookAt (target); 
+		player_leftArm.transform.Rotate (new Vector3 (0, 90, 0));
+	}
+	
+	void pointRFAto(Vector3 target)
+	{
+		player_rightForeArm.transform.LookAt (target);
+		player_rightForeArm.transform.Rotate (new Vector3 (0, -90, 0));
+	}
+	
+	void pointLFAto(Vector3 target)
+	{
+		player_leftForeArm.transform.LookAt (target);
+		player_leftForeArm.transform.Rotate (new Vector3 (0, 90, 0));
+	}
 }

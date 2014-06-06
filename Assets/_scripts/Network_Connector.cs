@@ -9,9 +9,10 @@ public class Network_Connector : MonoBehaviour
 {
 	public GUIText errorDialog;
 	public static bool networkEnabled = false;
-	public static float[] lastDataReceived = new float[7] {0.0f,0.0f,0.0f,0.0f,1.0f,1.0f,0.0f};
+	public static float[] lastDataReceived = new float[0];
 
-	private static string _IPAddress = "137.110.68.254:8000";
+	private static string _IPAddress = "128.54.38.18:8000";
+	// add input validation to lower http timeout rates
 	private static string url;
 
 	public static string IPAddress

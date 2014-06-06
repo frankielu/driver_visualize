@@ -55,6 +55,18 @@ public class CameraController : MonoBehaviour
 			standardPos.transform.RotateAround(driver.position, Vector3.up, -mousePanSpeed * Time.deltaTime);
 		}
 
+		if (Input.GetKey(KeyCode.UpArrow))
+		{
+			Vector3 rotationAxis = GetNormal(driver.position, driver.position + Vector3.up, standardPos.transform.position);
+			standardPos.transform.RotateAround(driver.position, rotationAxis, -mousePanSpeed * Time.deltaTime);
+		}
+
+		if (Input.GetKey(KeyCode.DownArrow))
+		{
+			Vector3 rotationAxis = GetNormal(driver.position, driver.position + Vector3.up, standardPos.transform.position);
+			standardPos.transform.RotateAround(driver.position, rotationAxis, mousePanSpeed * Time.deltaTime);
+		}
+
 		// make this scale with screen resolution in the future
 		// zoom the camera in and out on two finger touch or scroll wheel
 		if (Input.touchCount == 2) 
@@ -77,5 +89,13 @@ public class CameraController : MonoBehaviour
 		{
 			standardPos.transform.position += standardPos.forward * Input.GetAxis("Mouse ScrollWheel") * mouseZoomSpeed * Time.deltaTime;
 		}
+	}
+
+	// computes a positive valued normal
+	Vector3 GetNormal(Vector3 a, Vector3 b, Vector3 c)
+	{
+		Vector3 side1 = b - a;
+		Vector3 side2 = c - a;
+		return Vector3.Cross (side1, side2).normalized;
 	}
 }
