@@ -57,12 +57,24 @@ public class CameraController : MonoBehaviour
 
 		if (Input.GetKey(KeyCode.UpArrow))
 		{
+			// normalize the direction vector
+			Vector3 directionVector = (standardPos.transform.position - driver.position).normalized;
+
+			// compare with vector3.up
+			if (Vector3.Magnitude(Vector3.up - directionVector) < 0.1 || transform.position.y > 0) return;
+
 			Vector3 rotationAxis = GetNormal(driver.position, driver.position + Vector3.up, standardPos.transform.position);
 			standardPos.transform.RotateAround(driver.position, rotationAxis, -mousePanSpeed * Time.deltaTime);
 		}
 
 		if (Input.GetKey(KeyCode.DownArrow))
 		{
+			// normalize the direction vector
+			Vector3 directionVector = (standardPos.transform.position - driver.position).normalized;
+			
+			// compare with vector3.up
+			if (Vector3.Magnitude(Vector3.up - directionVector) < 0.1 || transform.position.y < 0) return;
+
 			Vector3 rotationAxis = GetNormal(driver.position, driver.position + Vector3.up, standardPos.transform.position);
 			standardPos.transform.RotateAround(driver.position, rotationAxis, mousePanSpeed * Time.deltaTime);
 		}
