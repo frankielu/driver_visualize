@@ -11,7 +11,7 @@ public class Network_Connector : MonoBehaviour
 	public static bool networkEnabled = false;
 	public static float[] lastDataReceived = new float[0];
 
-	private static string _IPAddress = "128.54.38.18:8000";
+	private static string _IPAddress = "128.54.47.161:8000";
 	// add input validation to lower http timeout rates
 	private static string url;
 

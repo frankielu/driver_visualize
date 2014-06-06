@@ -14,10 +14,12 @@ public class Player_Controller : MonoBehaviour
 	[System.NonSerialized]
 	public Transform enemy;
 
-	// debug view
+	public Texture ucsdLogo;
 	public GUIText errorDialog;
-
+	
 	public GameObject player_Head;
+	public GameObject player_leftHand;
+	public GameObject player_rightHand;
 	public GameObject player_leftEye;
 	public GameObject player_rightEye;
 	public GameObject player_leftUEL; //Upper eyelid
@@ -107,6 +109,8 @@ public class Player_Controller : MonoBehaviour
 	private bool _headIsMoving;
 	private bool isrhclose = true;
 	private bool islhclose = true;
+	private bool islhbend = false;
+	private bool isrhbend = false;
 	private Vector3 preset = new Vector3 (-23.49268f, 1.148f, -0.15f);
 //	private Vector3 shiftwc = new Vector3 (-23.2375f, 1.042182f, 0.443f);
 
@@ -280,11 +284,14 @@ public class Player_Controller : MonoBehaviour
 
 	void OnGUI()
 	{
-		GUI.color = driverEnabled == true ? Color.green : Color.red;
+		GUI.contentColor = driverEnabled == true ? Color.green : Color.red;
 
 		// client can change ip address to match the server
 		Network_Connector.IPAddress = GUI.TextField (new Rect (10f,10f,Screen.width*0.05f,Screen.height*0.03f), Network_Connector.IPAddress, 20);
 		// add input validation in the future
+
+		// ucsd logo, resolution is 1024 x 128
+		GUI.DrawTexture (new Rect (Screen.width*0.55f, 0, Screen.width*0.45f, Screen.width*0.45f*0.125f), ucsdLogo, ScaleMode.ScaleAndCrop);
 
 		// increase text size
 		if(GUI.Button(new Rect(10f,15f+Screen.height*0.05f,Screen.width*0.05f,Screen.height*0.05f), "On/Off")) 
@@ -334,7 +341,7 @@ public class Player_Controller : MonoBehaviour
 		Vector3 RFAdirection = new Vector3 (-23.5593f, 0.87f, 0.3144125f);
 		pointRAto (RAdirection);
 		pointRFAto (RFAdirection);
-		if (isrhclose==true){righthandopen ();}
+		righthandopen ();
 	}
 	
 	void Lhandonlap()
@@ -343,17 +350,10 @@ public class Player_Controller : MonoBehaviour
 		Vector3 LFAdirection = new Vector3 (-23.85f, 0.588f, 1.86f);
 		pointLAto (LAdirection);
 		pointLFAto (LFAdirection);
-		if (islhclose == true) {lefthandopen ();}
-	}
-	
-	void wheelposition()
-	{
-		Vector3 RAdirection = new Vector3 (-23.4687f, 1.1476f, 0.126f);
-		Vector3 RFAdirection = new Vector3 (-23.55484f, 1.362127f, 0.443f);
-		pointRAto (RAdirection);
-		pointRFAto (RFAdirection);
+		lefthandopen ();
 	}
 
+	// not needed but keep
 	void handonshift()
 	{
 		player_rightArm.transform.Rotate (new Vector3 (14.7f, -1.2f, -57.08f));
@@ -394,7 +394,7 @@ public class Player_Controller : MonoBehaviour
 
 	void PerformHandMovement(float lefthandx, float lefthandy, float righthandx, float righthandy)
 	{
-		Vector3 n = new Vector3(0.0f, -0.8f, 1.0f);
+		Vector3 n = new Vector3(0.01f, -0.8f, 1.0f);
 		n = n / n.magnitude;
 		float Zo = 0.443f;
 		float unitconvert = 0.005f;
@@ -415,114 +415,192 @@ public class Player_Controller : MonoBehaviour
 		float RY = originalRY [0] - offsetRY+0.05f;
 		float LZ = Zo - n.x*LX/n.z - n.y*LY/n.z - 0.02f;
 		float RZ = Zo - n.x*RX/n.z - n.y*RY/n.z - 0.02f;
+		
+		int lhzone = checkzone (lefthandx, lefthandy);
+		int rhzone = checkzone (righthandx, righthandy);
+		
 		if (righthandx == 0 && righthandy == 0) 
 		{
 			Rhandonlap();
 		}
-		else if (RX >= -23.3)
+		else if (rhzone == 1)
 		{
-			pointRAto(preset);//new Vector3 (-23.5593f, 1.012144f, -0.0541f));
+			pointRAto (new Vector3(RX, RY, RZ));
 			pointRFAto(new Vector3(RX, RY, RZ));
+			player_rightForeArm.transform.Rotate (new Vector3(30f, 0f, 0f));
+			righthandbend ();
+			righthandopen ();
 		}
-		else
+		else if (rhzone == 2)
+		{
+			pointRAto (new Vector3(RX, RY, RZ));
+			pointRFAto(new Vector3(RX, RY, RZ));
+			player_rightForeArm.transform.Rotate (new Vector3(-60f, 0f, 0f));
+			righthandunbend ();
+			righthandclose ();
+		}
+		else if (rhzone == 3 || rhzone == 5)
 		{
 			pointRAto(new Vector3(RX, RY, RZ));
 			pointRFAto(new Vector3(RX, RY, RZ));
+			righthandunbend();
+			righthandopen();
 		}
+		else if (rhzone == 4)
+		{
+			pointRAto(preset);
+			pointRFAto(new Vector3(RX, RY, RZ));
+			righthandunbend ();
+			righthandclose();
+		}
+		
+		
 		if (lefthandx == 0 && lefthandy == 0)
 		{
 			Lhandonlap();
 		}
-		else
+		else if (lhzone == 1)
 		{
 			pointLAto(new Vector3(LX, LY, LZ));
 			pointLFAto(new Vector3(LX, LY, LZ));
+			player_leftForeArm.transform.Rotate (new Vector3(-60f, 0f, 0f));
+			lefthandunbend();
 		}
-		
-		if (isrhclose == true && RX >= -23.3)
+		else if (lhzone == 2)
 		{
+			pointLAto(new Vector3(LX, LY, LZ));
+			pointLFAto(new Vector3(LX, LY, LZ));
+			lefthandbend();
+		}
+		else if (lhzone == 3 || lhzone == 4 || lhzone == 5)
+		{
+			pointLAto(new Vector3(LX, LY, LZ));
+			pointLFAto(new Vector3(LX, LY, LZ));
+			lefthandunbend();
+			//lefthandopen ();
+		}
+	}
+
+	void lefthandbend()
+	{
+		if (islhbend == false)
+		{
+			player_leftHand.transform.Rotate (new Vector3(0f, 0f, -60f));
+			lefthandopen ();
+			islhbend = true;
+		}
+	}
+	
+	void lefthandunbend()
+	{
+		if (islhbend == true)
+		{
+			player_leftHand.transform.Rotate(new Vector3(0f, 0f, 60f));
+			lefthandclose ();
+			islhbend = false;
+		}
+	}
+	
+	void righthandbend()
+	{
+		if (isrhbend == false)
+		{
+			player_rightHand.transform.Rotate (new Vector3(0f, 0f, 70f));
 			righthandopen ();
+			isrhbend = true;
 		}
-		if (isrhclose ==false && RX <-23.3)
+	}
+	
+	void righthandunbend()
+	{
+		if (isrhbend == true)
 		{
-			righthandclose();
-		}
-		if (islhclose == true && LX <= -24.20527)
-		{
-			lefthandopen();
-		}
-		if (islhclose == false && LX >-24.20527)
-		{
-			lefthandclose();
+			player_rightHand.transform.Rotate(new Vector3(0f, 0f, -70f));
+			righthandclose ();
+			isrhbend = false;
 		}
 	}
 	
 	void righthandopen()
 	{
-		player_rightHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, 30.51f));
-		player_rightHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, 88.4f));
-		player_rightHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, 38.38f));
-		player_rightHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f));
-		player_rightHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f));
-		player_rightHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f));
-		player_rightHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f));
-		player_rightHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f));
-		player_rightHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f));
-		player_rightHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f));
-		player_rightHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f));
-		player_rightHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f));
-		isrhclose = false;
+		if (isrhclose == true)
+		{
+			Vector3 z = new Vector3(0f, 0f, 10f);
+			player_rightHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f)+z);
+			player_rightHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f)+z);
+			player_rightHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f)+z);
+			player_rightHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f)+z);
+			player_rightHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f)+z);
+			player_rightHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f)+z);
+			player_rightHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f)+z);
+			player_rightHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f)+z);
+			player_rightHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f)+z);
+			player_rightHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, 35.91f)+z);
+			player_rightHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, 63.0f)+z);
+			player_rightHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, 47.18f)+z);
+			isrhclose = false;
+		}
 	}
 	
 	void lefthandclose()
 	{
-		player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
-		player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
-		player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
-		player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
-		player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
-		islhclose = true;
+		if (islhclose == false)
+		{
+			player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+			player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+			player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+			player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, 20.0f));
+			player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, 50.0f));
+			islhclose = true;
+		}
 	}
 
 	void righthandclose()
 	{
-		player_rightHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -30.51f));
-		player_rightHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -88.4f));
-		player_rightHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -38.38f));
-		player_rightHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f));
-		player_rightHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f));
-		player_rightHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f));
-		player_rightHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f));
-		player_rightHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f));
-		player_rightHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f));
-		player_rightHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f));
-		player_rightHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f));
-		player_rightHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f));
-		isrhclose = true;
+		if (isrhclose == false)
+		{
+			Vector3 z = new Vector3(0f, 0f, 10f);
+			player_rightHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f)-z);
+			player_rightHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f)-z);
+			player_rightHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f)-z);
+			player_rightHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f)-z);
+			player_rightHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f)-z);
+			player_rightHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f)-z);
+			player_rightHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f)-z);
+			player_rightHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f)-z);
+			player_rightHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f)-z);
+			player_rightHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -35.91f)-z);
+			player_rightHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -63.0f)-z);
+			player_rightHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -47.18f)-z);
+			isrhclose = true;
+		}
 	}
 
 	void lefthandopen()
 	{
-		player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-		player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-		player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-		player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-		player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-		islhclose = false;
+		if (islhclose == true)
+		{
+			player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			islhclose = false;
+		}
 	}
 
 	void pointRAto(Vector3 target)
@@ -548,5 +626,20 @@ public class Player_Controller : MonoBehaviour
 	{
 		player_leftForeArm.transform.LookAt (target);
 		player_leftForeArm.transform.Rotate (new Vector3 (0, 90, 0));
+	}
+
+	int checkzone(float pix, float piy)
+	{
+		Vector4 wheel_left = new Vector4 (120f, 310f, 247f, 54f);
+		Vector4 wheel_right = new Vector4 (247f, 310f, 387f, 54f);
+		Vector4 gear = new Vector4 (380f, 480f, 540f, 275f);
+		Vector4 radio = new Vector4 (380f, 275f, 570f, 78f);
+		
+		if (pix >= wheel_left.x && pix < wheel_left.z && piy >= wheel_left.w && piy < wheel_left.y) {return 1;}
+		if (pix >= wheel_right.x && pix < wheel_right.z && piy >= wheel_right.w && piy < wheel_right.y) {return 2;}
+		if (pix >= radio.x && pix < radio.z && piy >= radio.w && piy < radio.y) {return 3;}
+		if (pix >= gear.x && pix < gear.z && piy >= gear.w && piy < gear.y) {return 4;}
+		
+		return 5;
 	}
 }
