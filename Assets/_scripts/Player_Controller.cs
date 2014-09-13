@@ -1,4 +1,13 @@
-﻿using UnityEngine;
+﻿/// <summary>
+/// Player_Controller.cs
+/// 
+/// Main code that controls the character's movements, based on data that is
+/// received through a web connection. We want this character's movements
+/// to mirror what is being displayed in a video and show a proof-of-concept
+/// of our tracking algorithms.
+/// </summary>
+
+using UnityEngine;
 using System.Collections;
 using System;
 using System.IO;
@@ -16,6 +25,8 @@ public class Player_Controller : MonoBehaviour
 
 	public Texture ucsdLogo;
 	public GUIText errorDialog;
+
+	public GameObject gazePointer;
 	
 	public GameObject player_Head;
 	public GameObject player_leftHand;
@@ -135,6 +146,9 @@ public class Player_Controller : MonoBehaviour
 			_headIsMoving = value;
 			if (value == false)
 			{
+				// hide the gaze pointer
+				gazePointer.SetActive(false);
+
 				// head
 				player_Head.transform.position = originalHeadPosition;
 				player_Head.transform.rotation = originalHeadRotation;
@@ -179,10 +193,13 @@ public class Player_Controller : MonoBehaviour
 				player_leftHandFP2.transform.rotation = originalLHFP2Rotation;
 				player_leftHandFP3.transform.rotation = originalLHFP3Rotation;
 
-				Network_Connector.networkEnabled = false;
+				Network_Connector.isNetworkEnabled = false;
 			}
-			else
+			else // value == true
 			{
+				// enable gaze pointer
+				gazePointer.SetActive(true);
+
 				// head
 				originalHeadPosition = player_Head.transform.position;
 				originalHeadRotation = player_Head.transform.rotation;
@@ -232,7 +249,7 @@ public class Player_Controller : MonoBehaviour
 				originalLHFP2Rotation = player_leftHandFP2.transform.rotation;
 				originalLHFP3Rotation = player_leftHandFP3.transform.rotation;
 
-				Network_Connector.networkEnabled = true;
+				Network_Connector.isNetworkEnabled = true;
 			}
 		}
 	}
@@ -242,6 +259,8 @@ public class Player_Controller : MonoBehaviour
 		// work around for positioning for now
 		driverEnabled = true;
 		driverEnabled = false;
+
+		gazePointer.SetActive (false);
 
 		Screen.orientation = ScreenOrientation.LandscapeLeft;
 		errorDialog.text = String.Empty;
@@ -265,11 +284,16 @@ public class Player_Controller : MonoBehaviour
 			rightHandXValue = mostRecentData [9];
 			rightHandYValue = mostRecentData [10];
 
-			PerformRotation(headPitchValue, headYawValue, headRollValue);
+			PerformHeadRotation(headPitchValue, headYawValue, headRollValue);
 			PerformEyeBlink(leftEyeAreaValue, rightEyeAreaValue);
 
 			if (leftHandXValue < 0 || leftHandYValue < 0 || rightHandXValue < 0 || rightHandYValue < 0) return;
 			PerformHandMovement(leftHandXValue, leftHandYValue, rightHandXValue, rightHandYValue);
+
+			// move the gaze pointer to the location where the character is looking
+			// xxx - we will get the gaze coordinates off of the character head direction for now
+			IlluminateGazePos(new Ray(player_Head.transform.position, player_Head.transform.forward),
+			                  10, gazePointer);
 		}
 	}
 
@@ -280,6 +304,35 @@ public class Player_Controller : MonoBehaviour
 		{
 			Application.Quit();
 		}
+	}
+
+	/// <summary>
+	/// Gets the coordinates of a position in which the character is looking at. 
+	/// </summary>
+	/// <returns>The gaze coordinates.</returns>
+	/// <param name="position">A ray containing the origin of the character and the direction he is facing.</param>
+	/// <param name="dist">The distance away from the character that a point should be returned.</param>
+	Vector3 GetGazeCoordinates (Ray position, float dist)
+	{
+		return position.direction * dist;
+	}
+
+	/// <summary>
+	/// Moves an object to the line of sight in which the character is looking.
+	/// </summary>
+	/// <param name="character">A ray of the character's head origin and the direction theyre facing.</param>
+	/// <param name="dist">Distance from the origin of the point illuminated</param> 
+	/// <param name="obj">The object to move to the gaze position</param>
+	void IlluminateGazePos (Ray character, float dist, GameObject obj)
+	{
+		// calculate the coordinates of the gaze position
+		Vector3 gazePos = character.GetPoint(dist);
+
+		// get the current coordinates of the gameobject
+		Vector3 currentObjPos = obj.transform.position;
+
+		// lerp the game object to the specified location (for smoothness)
+		obj.transform.position = Vector3.Lerp (currentObjPos, gazePos, 0.4f);
 	}
 
 	void OnGUI()
@@ -301,7 +354,7 @@ public class Player_Controller : MonoBehaviour
 		}
 	}
 
-	void PerformRotation(float pitchMovement, float yawMovement, float rollMovement)
+	void PerformHeadRotation(float pitchMovement, float yawMovement, float rollMovement)
 	{
 		player_Head.transform.localRotation = Quaternion.Lerp (player_Head.transform.localRotation, Quaternion.Euler(rollMovement, -yawMovement, -pitchMovement), 
 		                                                  0.4f);                                 
@@ -335,26 +388,28 @@ public class Player_Controller : MonoBehaviour
 		Rlastrotate = Rrotate;
 	}
 
-	void Rhandonlap()
+	void RightHandToLap()
 	{
 		Vector3 RAdirection = new Vector3 (-23.5593f, 1.012144f, -0.0541f);
 		Vector3 RFAdirection = new Vector3 (-23.5593f, 0.87f, 0.3144125f);
-		pointRAto (RAdirection);
-		pointRFAto (RFAdirection);
-		righthandopen ();
+		PointRightArm (RAdirection);
+		PointRightForearm (RFAdirection);
+		OpenRightHand ();
 	}
 	
-	void Lhandonlap()
+	void LeftHandToLap()
 	{
 		Vector3 LAdirection = new Vector3 (-24.2f, -0.075f, 1.0678f);
 		Vector3 LFAdirection = new Vector3 (-23.85f, 0.588f, 1.86f);
-		pointLAto (LAdirection);
-		pointLFAto (LFAdirection);
-		lefthandopen ();
+		PointLeftArm (LAdirection);
+		PointLeftForearm (LFAdirection);
+		OpenLeftHand ();
 	}
 
-	// not needed but keep
-	void handonshift()
+	/// <summary>
+	/// Moves the character's hands to touch the shift.
+	/// </summary>
+	void HandsToShift()
 	{
 		player_rightArm.transform.Rotate (new Vector3 (14.7f, -1.2f, -57.08f));
 		player_rightForeArm.transform.Rotate (new Vector3 (33.3f, 18.6f, 43.6f));
@@ -373,7 +428,10 @@ public class Player_Controller : MonoBehaviour
 
 	}
 
-	void handonwheel()
+	/// <summary>
+	/// Moves the character's hands to hold the steering wheel.
+	/// </summary>
+	void HandsToWheel()
 	{
 		player_rightArm.transform.rotation = originalRARotation;
 		player_rightForeArm.transform.rotation = originalRFARotation;
@@ -392,6 +450,9 @@ public class Player_Controller : MonoBehaviour
 		
 	}
 
+	/// <summary>
+	/// Performs a hand movement based on the hand parameters given.
+	/// </summary>
 	void PerformHandMovement(float lefthandx, float lefthandy, float righthandx, float righthandy)
 	{
 		Vector3 n = new Vector3(0.01f, -0.8f, 1.0f);
@@ -416,112 +477,112 @@ public class Player_Controller : MonoBehaviour
 		float LZ = Zo - n.x*LX/n.z - n.y*LY/n.z - 0.02f;
 		float RZ = Zo - n.x*RX/n.z - n.y*RY/n.z - 0.02f;
 		
-		int lhzone = checkzone (lefthandx, lefthandy);
-		int rhzone = checkzone (righthandx, righthandy);
+		int lhzone = CheckZone (lefthandx, lefthandy);
+		int rhzone = CheckZone (righthandx, righthandy);
 		
 		if (righthandx == 0 && righthandy == 0) 
 		{
-			Rhandonlap();
+			RightHandToLap();
 		}
 		else if (rhzone == 1)
 		{
-			pointRAto (new Vector3(RX, RY, RZ));
-			pointRFAto(new Vector3(RX, RY, RZ));
+			PointRightArm (new Vector3(RX, RY, RZ));
+			PointRightForearm(new Vector3(RX, RY, RZ));
 			player_rightForeArm.transform.Rotate (new Vector3(30f, 0f, 0f));
-			righthandbend ();
-			righthandopen ();
+			BendRightHand ();
+			OpenRightHand ();
 		}
 		else if (rhzone == 2)
 		{
-			pointRAto (new Vector3(RX, RY, RZ));
-			pointRFAto(new Vector3(RX, RY, RZ));
+			PointRightArm (new Vector3(RX, RY, RZ));
+			PointRightForearm(new Vector3(RX, RY, RZ));
 			player_rightForeArm.transform.Rotate (new Vector3(-60f, 0f, 0f));
-			righthandunbend ();
-			righthandclose ();
+			UnbendRightHand ();
+			CloseRightHand ();
 		}
 		else if (rhzone == 3 || rhzone == 5)
 		{
-			pointRAto(new Vector3(RX, RY, RZ));
-			pointRFAto(new Vector3(RX, RY, RZ));
-			righthandunbend();
-			righthandopen();
+			PointRightArm(new Vector3(RX, RY, RZ));
+			PointRightForearm(new Vector3(RX, RY, RZ));
+			UnbendRightHand();
+			OpenRightHand();
 		}
 		else if (rhzone == 4)
 		{
-			pointRAto(preset);
-			pointRFAto(new Vector3(RX, RY, RZ));
-			righthandunbend ();
-			righthandclose();
+			PointRightArm(preset);
+			PointRightForearm(new Vector3(RX, RY, RZ));
+			UnbendRightHand ();
+			CloseRightHand();
 		}
 		
 		
 		if (lefthandx == 0 && lefthandy == 0)
 		{
-			Lhandonlap();
+			LeftHandToLap();
 		}
 		else if (lhzone == 1)
 		{
-			pointLAto(new Vector3(LX, LY, LZ));
-			pointLFAto(new Vector3(LX, LY, LZ));
+			PointLeftArm(new Vector3(LX, LY, LZ));
+			PointLeftForearm(new Vector3(LX, LY, LZ));
 			player_leftForeArm.transform.Rotate (new Vector3(-60f, 0f, 0f));
-			lefthandunbend();
+			UnbendLeftHand();
 		}
 		else if (lhzone == 2)
 		{
-			pointLAto(new Vector3(LX, LY, LZ));
-			pointLFAto(new Vector3(LX, LY, LZ));
-			lefthandbend();
+			PointLeftArm(new Vector3(LX, LY, LZ));
+			PointLeftForearm(new Vector3(LX, LY, LZ));
+			BendLeftHand();
 		}
 		else if (lhzone == 3 || lhzone == 4 || lhzone == 5)
 		{
-			pointLAto(new Vector3(LX, LY, LZ));
-			pointLFAto(new Vector3(LX, LY, LZ));
-			lefthandunbend();
+			PointLeftArm(new Vector3(LX, LY, LZ));
+			PointLeftForearm(new Vector3(LX, LY, LZ));
+			UnbendLeftHand();
 			//lefthandopen ();
 		}
 	}
 
-	void lefthandbend()
+	void BendLeftHand()
 	{
 		if (islhbend == false)
 		{
 			player_leftHand.transform.Rotate (new Vector3(0f, 0f, -60f));
-			lefthandopen ();
+			OpenLeftHand ();
 			islhbend = true;
 		}
 	}
 	
-	void lefthandunbend()
+	void UnbendLeftHand()
 	{
 		if (islhbend == true)
 		{
 			player_leftHand.transform.Rotate(new Vector3(0f, 0f, 60f));
-			lefthandclose ();
+			CloseLeftHand ();
 			islhbend = false;
 		}
 	}
 	
-	void righthandbend()
+	void BendRightHand()
 	{
 		if (isrhbend == false)
 		{
 			player_rightHand.transform.Rotate (new Vector3(0f, 0f, 70f));
-			righthandopen ();
+			OpenRightHand ();
 			isrhbend = true;
 		}
 	}
 	
-	void righthandunbend()
+	void UnbendRightHand()
 	{
 		if (isrhbend == true)
 		{
 			player_rightHand.transform.Rotate(new Vector3(0f, 0f, -70f));
-			righthandclose ();
+			CloseRightHand ();
 			isrhbend = false;
 		}
 	}
 	
-	void righthandopen()
+	void OpenRightHand()
 	{
 		if (isrhclose == true)
 		{
@@ -541,8 +602,28 @@ public class Player_Controller : MonoBehaviour
 			isrhclose = false;
 		}
 	}
+
+	void OpenLeftHand()
+	{
+		if (islhclose == true)
+		{
+			player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
+			player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
+			islhclose = false;
+		}
+	}
 	
-	void lefthandclose()
+	void CloseLeftHand()
 	{
 		if (islhclose == false)
 		{
@@ -562,7 +643,7 @@ public class Player_Controller : MonoBehaviour
 		}
 	}
 
-	void righthandclose()
+	void CloseRightHand()
 	{
 		if (isrhclose == false)
 		{
@@ -582,53 +663,33 @@ public class Player_Controller : MonoBehaviour
 			isrhclose = true;
 		}
 	}
-
-	void lefthandopen()
-	{
-		if (islhclose == true)
-		{
-			player_leftHandFI1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-			player_leftHandFI2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			player_leftHandFI3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			player_leftHandFM1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-			player_leftHandFM2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			player_leftHandFM3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			player_leftHandFR1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-			player_leftHandFR2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			player_leftHandFR3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			player_leftHandFP1.transform.Rotate (new Vector3(0.0f, 0.0f, -20.0f));
-			player_leftHandFP2.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			player_leftHandFP3.transform.Rotate (new Vector3(0.0f, 0.0f, -50.0f));
-			islhclose = false;
-		}
-	}
-
-	void pointRAto(Vector3 target)
+	
+	void PointRightArm(Vector3 target)
 	{
 		
 		player_rightArm.transform.LookAt (target);
 		player_rightArm.transform.Rotate (new Vector3 (0, -90, 0));
 	}
 	
-	void pointLAto(Vector3 target)
+	void PointLeftArm(Vector3 target)
 	{
 		player_leftArm.transform.LookAt (target); 
 		player_leftArm.transform.Rotate (new Vector3 (0, 90, 0));
 	}
 	
-	void pointRFAto(Vector3 target)
+	void PointRightForearm(Vector3 target)
 	{
 		player_rightForeArm.transform.LookAt (target);
 		player_rightForeArm.transform.Rotate (new Vector3 (0, -90, 0));
 	}
 	
-	void pointLFAto(Vector3 target)
+	void PointLeftForearm(Vector3 target)
 	{
 		player_leftForeArm.transform.LookAt (target);
 		player_leftForeArm.transform.Rotate (new Vector3 (0, 90, 0));
 	}
 
-	int checkzone(float pix, float piy)
+	int CheckZone(float pix, float piy)
 	{
 		Vector4 wheel_left = new Vector4 (120f, 310f, 247f, 54f);
 		Vector4 wheel_right = new Vector4 (247f, 310f, 387f, 54f);

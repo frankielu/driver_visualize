@@ -35,16 +35,11 @@ public class CameraController : MonoBehaviour
 
 	void Update () 
 	{
+		///////////////////////////
+		// keyboard / windows input
+		///////////////////////////
+
 		// pan the camera on touch or mouse
-		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
-		{
-			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
-
-			// set a minimum rotate speed or the lerp will mess it up
-			standardPos.transform.RotateAround(driver.position, Vector3.up, Mathf.Clamp(touchDeltaPosition.x * touchPanSpeed * Time.deltaTime,
-                                                                            -maxRotateSpeed, maxRotateSpeed));
-		}
-
 		if (Input.GetKey(KeyCode.LeftArrow))
 		{
 			standardPos.transform.RotateAround(driver.position, Vector3.up, mousePanSpeed * Time.deltaTime);
@@ -61,7 +56,7 @@ public class CameraController : MonoBehaviour
 			Vector3 directionVector = (standardPos.transform.position - driver.position).normalized;
 
 			// compare with vector3.up
-			if (Vector3.Magnitude(Vector3.up - directionVector) < 0.1 || transform.position.y > 0) return;
+			if (Vector3.Magnitude(Vector3.up - directionVector) < 0.3f && directionVector.y > 0) return;
 
 			Vector3 rotationAxis = GetNormal(driver.position, driver.position + Vector3.up, standardPos.transform.position);
 			standardPos.transform.RotateAround(driver.position, rotationAxis, -mousePanSpeed * Time.deltaTime);
@@ -69,14 +64,43 @@ public class CameraController : MonoBehaviour
 
 		if (Input.GetKey(KeyCode.DownArrow))
 		{
-			// normalize the direction vector
-			Vector3 directionVector = (standardPos.transform.position - driver.position).normalized;
-			
-			// compare with vector3.up
-			if (Vector3.Magnitude(Vector3.up - directionVector) < 0.1 || transform.position.y < 0) return;
+			if (driver.position.y + 1.0f > standardPos.transform.position.y) return;
 
 			Vector3 rotationAxis = GetNormal(driver.position, driver.position + Vector3.up, standardPos.transform.position);
 			standardPos.transform.RotateAround(driver.position, rotationAxis, mousePanSpeed * Time.deltaTime);
+		}
+
+		// zoom the camera
+		if (Input.GetAxis("Mouse ScrollWheel") != 0.0f)
+		{
+			standardPos.transform.position += standardPos.forward * Input.GetAxis("Mouse ScrollWheel") * mouseZoomSpeed * Time.deltaTime;
+		}
+
+		///////////////
+		// mobile input
+		///////////////
+
+		// pan the camera on touch or mouse
+		if (Input.touchCount == 1 && Input.GetTouch (0).phase == TouchPhase.Moved) 
+		{
+			Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
+			
+			// set a minimum rotate speed or the lerp will mess it up
+			standardPos.transform.RotateAround(driver.position, Vector3.up, Mathf.Clamp(touchDeltaPosition.x * touchPanSpeed * Time.deltaTime,
+			                                                                            -maxRotateSpeed, maxRotateSpeed));
+
+			if (touchDeltaPosition.y != 0)
+			{
+				Vector3 directionVector = (standardPos.transform.position - driver.position).normalized;
+
+				if (touchDeltaPosition.y > 0 && !(Vector3.Magnitude(Vector3.up - directionVector) < 0.3f && directionVector.y > 0) ||
+				    touchDeltaPosition.y < 0 && !(driver.position.y + 1.0f > standardPos.transform.position.y))
+				{
+					Vector3 rotationAxis = GetNormal(driver.position, driver.position + Vector3.up, standardPos.transform.position);
+					standardPos.transform.RotateAround(driver.position, rotationAxis, Mathf.Clamp(-touchDeltaPosition.y * touchPanSpeed * Time.deltaTime,
+					                                                                              -maxRotateSpeed, maxRotateSpeed));
+				}
+			}
 		}
 
 		// make this scale with screen resolution in the future
@@ -95,11 +119,6 @@ public class CameraController : MonoBehaviour
 			float deltaMagDiff = touchDeltaMag - prevDeltaMag;
 
 			standardPos.transform.position += standardPos.forward * deltaMagDiff * touchZoomSpeed * Time.deltaTime;
-		}
-
-		if (Input.GetAxis("Mouse ScrollWheel") != 0.0f)
-		{
-			standardPos.transform.position += standardPos.forward * Input.GetAxis("Mouse ScrollWheel") * mouseZoomSpeed * Time.deltaTime;
 		}
 	}
 
