@@ -7,6 +7,7 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Globalization;
 
 using System;
 using System.Linq;
@@ -18,7 +19,7 @@ public class Network_Connector : MonoBehaviour
 	public static bool isNetworkEnabled = false;
 	public static float[] lastDataReceived = new float[0];
 
-	private static string _IPAddress = "169.228.152.107:8000"; // default ip to open socket with
+	private static string _IPAddress = "169.228.153.54:8000"; // default ip to open socket with
 	// xxx - add input validation to lower http timeout rates
 	private static string url;
 	
@@ -50,7 +51,7 @@ public class Network_Connector : MonoBehaviour
 
 		if (www.error == null) // no errors
 		{
-			lastDataReceived = www.text.Split(',').Select(x => float.Parse(x)).ToArray();
+			lastDataReceived = www.text.Split(',').Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray();
 			errorDialog.text = String.Empty;
 		}
 		else // there is an error
